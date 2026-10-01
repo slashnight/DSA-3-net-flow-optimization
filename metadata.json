@@ -1,0 +1,6 @@
+{
+  "name": "Live Network Traffic - Secure Transmission Control",
+  "description": "High-definition 3D virtual network traffic engineering, telemetry profiler, and real-time secure flow control dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

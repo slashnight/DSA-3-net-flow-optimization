@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #051424;
+    color: #d4e4fa;
+    overflow: hidden;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior: none;
+  }
+
+  #root {
+    width: 100%;
+    height: 100%;
+    isolation: isolate;
+  }
+}
+
+.font-mono-data {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom Grid */
+.dot-grid {
+  background-image: radial-gradient(circle, #1c2b3c 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+}
+
+/* Marching Ants Animation */
+.marching-ants {
+  stroke-dasharray: 6, 6;
+  animation: dash 1.5s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+/* Pulse Animations */
+.pulse-error {
+  animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    opacity: 1;
+    border-color: #ffb4ab;
+  }
+  50% {
+    opacity: 0.5;
+    border-color: rgba(255, 180, 171, 0.3);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(78, 222, 163, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgba(78, 222, 163, 0.9));
+  }
+}
+
+.highlight-node {
+  animation: pulse-glow 1.5s ease-in-out infinite alternate;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #0d1c2d;
+}
+::-webkit-scrollbar-thumb {
+  background: #273647;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #424754;
+}
+
+/* Toast Animation */
+@keyframes toast-enter {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-toast {
+  animation: toast-enter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.transition-smooth {
+  transition: transform 180ms ease, opacity 180ms ease, box-shadow 180ms ease;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
