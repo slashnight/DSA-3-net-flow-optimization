@@ -14,7 +14,6 @@ import {
   RotateCw,
   Play,
   Pause,
-  Square,
   Box,
   Layers,
   ZoomIn,
@@ -31,15 +30,15 @@ import {
   BarChart3,
   Radio,
   Compass,
-  Zap,
   AlertTriangle,
   RefreshCw,
   GitFork,
   CheckCircle2,
-  Award,
   Sparkles,
-  ArrowRight,
   History,
+  Signal,
+  Wifi,
+  FileText,
 } from 'lucide-react';
 import { CompletedTransferRouteInfo } from '../types';
 
@@ -367,24 +366,28 @@ export const CenterView: React.FC<CenterViewProps> = ({
           {/* Zoom controls */}
           <button
             onClick={handleZoomIn}
-            title="Zoom In"
+            title="Zoom In (scroll up)"
             className="p-1 text-[#8c909f] hover:text-[#adc6ff] hover:bg-[#273647] rounded transition-all"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
           <button
+            onClick={handleResetZoom}
+            title="Reset Zoom to 100%"
+            className={`px-1.5 py-0.5 rounded transition-all text-[9px] font-bold ${
+              zoomLevel === 1
+                ? 'text-[#8c909f] hover:text-[#adc6ff] hover:bg-[#273647]'
+                : 'bg-[#adc6ff]/20 text-[#adc6ff] border border-[#adc6ff]/40'
+            }`}
+          >
+            {Math.round(zoomLevel * 100)}%
+          </button>
+          <button
             onClick={handleZoomOut}
-            title="Zoom Out"
+            title="Zoom Out (scroll down)"
             className="p-1 text-[#8c909f] hover:text-[#adc6ff] hover:bg-[#273647] rounded transition-all"
           >
             <ZoomOut className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={handleResetZoom}
-            title="Reset View"
-            className="p-1 text-[#8c909f] hover:text-[#adc6ff] hover:bg-[#273647] rounded transition-all text-[9px] font-bold"
-          >
-            1x
           </button>
 
           <div className="w-px h-4 bg-[#424754] mx-0.5" />
@@ -538,34 +541,66 @@ export const CenterView: React.FC<CenterViewProps> = ({
 
         {/* Selected Hub Telemetry Card in 3D Mode */}
         {selectedHub && (
-          <div className="absolute top-16 left-4 z-30 bg-[#122131]/95 backdrop-blur border border-[#adc6ff] rounded-lg p-3 shadow-2xl w-64 font-mono-data text-[11px] animate-toast">
-            <div className="flex justify-between items-center border-b border-[#424754] pb-1.5 mb-2">
-              <div className="font-bold text-[#adc6ff] text-[13px]">{selectedHub.name}</div>
+          <div className="absolute top-16 left-4 z-30 bg-[#122131]/95 backdrop-blur border border-[#adc6ff] rounded-xl p-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.7),0_0_16px_rgba(173,198,255,0.2)] w-64 font-mono-data text-[11px] animate-toast">
+            {/* Hub Header */}
+            <div className="flex justify-between items-start border-b border-[#424754] pb-2 mb-2.5">
+              <div>
+                <div className="font-bold text-[#adc6ff] text-[13px] leading-tight">{selectedHub.name}</div>
+                <div className="text-[9px] text-[#8c909f] mt-0.5 flex items-center gap-1">
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    selectedHub.status === 'healthy' ? 'bg-[#4edea3]' :
+                    selectedHub.status === 'warning' ? 'bg-[#ffb786]' : 'bg-[#ffb4ab]'
+                  }`} />
+                  <span className={`uppercase font-bold ${
+                    selectedHub.status === 'healthy' ? 'text-[#4edea3]' :
+                    selectedHub.status === 'warning' ? 'text-[#ffb786]' : 'text-[#ffb4ab]'
+                  }`}>{selectedHub.status}</span>
+                  <span className="text-[#424754]">•</span>
+                  <span>{selectedHub.code}</span>
+                </div>
+              </div>
               <button
                 onClick={() => onSelectHub(null)}
-                className="text-[#8c909f] hover:text-[#d4e4fa] text-[12px]"
+                className="text-[#424754] hover:text-[#d4e4fa] hover:bg-[#273647] w-5 h-5 rounded flex items-center justify-center transition-colors text-[12px] mt-0.5"
               >
                 ✕
               </button>
             </div>
-            <div className="flex flex-col gap-1 text-[#c2c6d6]">
-              <div className="flex justify-between">
-                <span>Direct Ping:</span>
-                <span className="text-[#4edea3] font-bold">{selectedHub.ping} ms</span>
+
+            {/* Metrics */}
+            <div className="flex flex-col gap-1.5 text-[#c2c6d6]">
+              <div className="flex justify-between items-center">
+                <span className="flex items-center gap-1 text-[#8c909f]"><Signal className="w-3 h-3" /> Direct Ping:</span>
+                <span className={`font-bold ${
+                  selectedHub.ping < 50 ? 'text-[#4edea3]' : selectedHub.ping < 120 ? 'text-[#ffb786]' : 'text-[#ffb4ab]'
+                }`}>{selectedHub.ping} ms</span>
               </div>
-              <div className="flex justify-between">
-                <span>Cluster Load:</span>
-                <span className={selectedHub.load > 80 ? 'text-[#ffb4ab] font-bold' : 'text-[#adc6ff]'}>
-                  {selectedHub.load}%
-                </span>
+
+              {/* Load bar */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[#8c909f]">Cluster Load:</span>
+                  <span className={`font-bold ${
+                    selectedHub.load > 80 ? 'text-[#ffb4ab]' : selectedHub.load > 60 ? 'text-[#ffb786]' : 'text-[#4edea3]'
+                  }`}>{selectedHub.load}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#273647] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      selectedHub.load > 80 ? 'bg-[#ffb4ab]' : selectedHub.load > 60 ? 'bg-[#ffb786]' : 'bg-[#4edea3]'
+                    }`}
+                    style={{ width: `${selectedHub.load}%` }}
+                  />
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Active Tunnels:</span>
-                <span className="text-[#d4e4fa]">{selectedHub.activeTunnels} TLS-1.3</span>
+
+              <div className="flex justify-between items-center">
+                <span className="flex items-center gap-1 text-[#8c909f]"><Wifi className="w-3 h-3" /> Active Tunnels:</span>
+                <span className="text-[#d4e4fa]">{selectedHub.activeTunnels} <span className="text-[#8c909f] text-[9px]">TLS-1.3</span></span>
               </div>
-              <div className="flex justify-between">
-                <span>IP Gateway:</span>
-                <span className="text-[#8c909f]">{selectedHub.ip}</span>
+              <div className="flex justify-between items-center pt-1 border-t border-[#424754]/50 mt-0.5">
+                <span className="text-[#8c909f]">IP Gateway:</span>
+                <span className="text-[#8c909f] font-mono text-[10px] bg-[#051424] px-1.5 py-0.5 rounded">{selectedHub.ip}</span>
               </div>
             </div>
           </div>
@@ -663,58 +698,81 @@ export const CenterView: React.FC<CenterViewProps> = ({
           {/* Content List */}
           <div
             style={{ maxHeight: `${logBoxHeight}px` }}
-            className="p-2.5 flex flex-col gap-2.5 overflow-y-auto bg-[#010f1f]/80 font-mono-data"
+            className="p-2.5 flex flex-col gap-2 overflow-y-auto bg-[#010f1f]/80 font-mono-data"
           >
             {ingestedFiles.length === 0 ? (
-              <div className="py-6 px-3 text-center flex flex-col items-center justify-center gap-2 text-[#8c909f]">
-                <Radio className="w-6 h-6 text-[#424754]" />
-                <span className="text-[10px] leading-relaxed">
-                  Queue is empty (0 streams, 0 MB).
-                  <br />
-                  Add files, pictures, or folders in Target Ingest to start calculating metrics.
-                </span>
+              <div className="py-8 px-3 text-center flex flex-col items-center justify-center gap-3 text-[#8c909f]">
+                <div className="w-10 h-10 rounded-full bg-[#122131] border border-[#424754] flex items-center justify-center">
+                  <Radio className="w-5 h-5 text-[#424754]" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold text-[#424754]">No Active Streams</span>
+                  <span className="text-[9px] leading-relaxed text-[#424754]">
+                    Queue empty · 0 files · 0 MB
+                  </span>
+                  <span className="text-[9px] leading-relaxed text-[#424754]/70">
+                    Add files in Target Ingest to begin.
+                  </span>
+                </div>
               </div>
             ) : (
               ingestedFiles.map((file) => {
-                const isCompleted = file.status === 'COMPLETED';
+                const isCompletedFile = file.status === 'COMPLETED';
                 const isFailed = file.status === 'FAILED';
-                const isErrored = hasError && !isCompleted;
-                const displayState = isCompleted
-                  ? 'COMPLETED'
+                const isErrored = hasError && !isCompletedFile;
+                const displayState = isCompletedFile
+                  ? 'DONE'
                   : isFailed || isErrored
-                    ? `FAILED (${file.progress}%)`
+                    ? `FAILED`
                     : file.status === 'SYNCING'
                       ? `${file.progress}%`
                       : file.status;
 
-                const displayClass = isCompleted
-                  ? 'text-[#4edea3]'
+                const statusClass = isCompletedFile
+                  ? 'text-[#4edea3] bg-[#003824] border-[#4edea3]/40'
                   : isFailed || isErrored
-                    ? 'text-[#ffb4ab] font-bold'
+                    ? 'text-[#ffb4ab] bg-[#93000a]/40 border-[#ffb4ab]/40'
                     : file.status === 'SYNCING'
-                      ? 'text-[#4edea3] animate-pulse'
-                      : 'text-[#ffb786]';
+                      ? 'text-[#adc6ff] bg-[#002e6a]/40 border-[#adc6ff]/40 animate-pulse'
+                      : 'text-[#ffb786] bg-[#3a1a0f]/40 border-[#ffb786]/30';
 
-                const barClass = isCompleted
+                const barClass = isCompletedFile
                   ? 'bg-[#4edea3]'
                   : isFailed || isErrored
                     ? 'bg-[#ffb4ab]'
                     : 'bg-[#4d8eff]';
 
                 return (
-                  <div key={file.id} className="flex flex-col gap-1 border-b border-[#424754]/30 pb-2">
-                    <div className="flex justify-between items-center text-[10px]">
-                      <span className="text-[#adc6ff] font-bold">[{file.user}]</span>
-                      <span className={`text-[9px] font-bold uppercase ${displayClass}`}>
+                  <div
+                    key={file.id}
+                    className={`flex flex-col gap-1 border rounded-lg p-2 transition-all ${
+                      isErrored ? 'border-[#ffb4ab]/30 bg-[#93000a]/10' :
+                      isCompletedFile ? 'border-[#4edea3]/20 bg-[#003824]/10' :
+                      'border-[#424754]/30 bg-[#0a1929]/40'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <FileText className="w-3 h-3 text-[#8c909f] flex-shrink-0" />
+                        <span className="text-[10px] text-[#c2c6d6] truncate" title={file.name}>
+                          {file.name}
+                        </span>
+                      </div>
+                      <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded border flex-shrink-0 ml-1 ${statusClass}`}>
                         {displayState}
                       </span>
                     </div>
-                    <div className="text-[11px] text-[#c2c6d6] truncate font-inter">
-                      {file.name} ({file.sizeMB}MB)
+
+                    <div className="flex items-center justify-between text-[9px] text-[#8c909f]">
+                      <span className="text-[#424754]">[{file.user}]</span>
+                      <span className="text-[#424754]">{file.sizeMB} MB</span>
                     </div>
+
                     <div className="w-full h-1 bg-[#273647] rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${barClass}`}
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          barClass
+                        } ${file.status === 'SYNCING' ? 'animate-shimmer' : ''}`}
                         style={{ width: `${file.progress}%` }}
                       />
                     </div>

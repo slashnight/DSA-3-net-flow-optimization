@@ -18,6 +18,9 @@ import {
   Server,
   Sparkles,
   History,
+  TrendingUp,
+  TrendingDown,
+  Network,
 } from 'lucide-react';
 
 interface RightPanelProps {
@@ -364,8 +367,9 @@ export const RightPanel: React.FC<RightPanelProps> = ({
         {/* Live Metrics Grid */}
         <div className="grid grid-cols-2 gap-2">
           {/* Total Throughput */}
-          <div className="bg-[#051424] p-3 rounded border border-[#424754]">
-            <div className="font-mono-data text-[9px] text-[#8c909f] font-bold tracking-wider mb-0.5">
+          <div className="bg-[#051424] p-3 rounded border border-[#424754] relative overflow-hidden">
+            <div className="font-mono-data text-[9px] text-[#8c909f] font-bold tracking-wider mb-0.5 flex items-center gap-1">
+              {isSending ? <TrendingUp className="w-3 h-3 text-[#adc6ff]" /> : <TrendingDown className="w-3 h-3 text-[#4edea3]" />}
               {isSending ? 'TX THROUGHPUT (UPLINK)' : 'RX THROUGHPUT (DOWNLINK)'}
             </div>
             <div className="font-mono-data text-[19px] font-bold text-[#adc6ff]">
@@ -374,6 +378,16 @@ export const RightPanel: React.FC<RightPanelProps> = ({
             </div>
             <div className="text-[9px] font-mono-data text-[#8c909f] mt-0.5">
               ≈ {Math.round(throughputMBps)} MB/s
+            </div>
+            {/* Mini trend bar */}
+            <div className="mt-1.5 flex gap-0.5 items-end h-3">
+              {[0.4, 0.6, 0.5, 0.8, 0.7, 0.9, 1.0].map((h, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-sm bg-[#adc6ff]/40"
+                  style={{ height: `${h * 100}%`, opacity: i === 6 ? 1 : 0.5 + i * 0.07 }}
+                />
+              ))}
             </div>
           </div>
 
@@ -512,25 +526,44 @@ export const RightPanel: React.FC<RightPanelProps> = ({
               <Layers className="w-3 h-3 text-[#adc6ff]" />
               Flow Algorithm Profiler
             </label>
-            <span className="text-[9px] font-mono-data text-[#8c909f]">
-              Graph |V|=10, |E|=15
-            </span>
+            <div className="flex items-center gap-1">
+              <Network className="w-3 h-3 text-[#8c909f]" />
+              <span className="text-[9px] font-mono-data text-[#8c909f]">
+                |V|=10, |E|=15
+              </span>
+            </div>
           </div>
           <div className="bg-[#051424] border border-[#424754] rounded overflow-hidden">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left" style={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
+              <colgroup>
+                <col style={{ width: '32%' }} />
+                <col style={{ width: '24%' }} />
+                <col style={{ width: '24%' }} />
+                <col style={{ width: '20%' }} />
+              </colgroup>
               <thead>
                 <tr className="border-b border-[#424754] bg-[#1c2b3c]">
-                  <th className="p-2 font-mono-data text-[10px] text-[#8c909f] font-bold">Metric</th>
-                  <th className="p-2 font-mono-data text-[10px] text-[#adc6ff] font-bold">Dinic's (Active)</th>
-                  <th className="p-2 font-mono-data text-[10px] text-[#8c909f] font-bold">Edmonds-Karp</th>
+                  <th className="px-2 py-1.5 font-mono-data text-[9px] text-[#8c909f] font-bold uppercase tracking-wide">Metric</th>
+                  <th className="px-2 py-1.5 font-mono-data text-[9px] text-[#adc6ff] font-bold uppercase tracking-wide">
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#4edea3] inline-block" />
+                      Dinic's
+                    </span>
+                  </th>
+                  <th className="px-2 py-1.5 font-mono-data text-[9px] text-[#8c909f] font-bold uppercase tracking-wide">Edm-Karp</th>
+                  <th className="px-2 py-1.5 font-mono-data text-[9px] text-[#8c909f] font-bold uppercase tracking-wide">Push-Rel</th>
                 </tr>
               </thead>
-              <tbody className="font-mono-data text-[11px]">
+              <tbody className="font-mono-data text-[10px] divide-y divide-[#424754]/60">
                 {algorithmMetrics.map((item, idx) => (
-                  <tr key={idx} className={idx !== algorithmMetrics.length - 1 ? 'border-b border-[#424754]' : ''}>
-                    <td className="p-2 text-[#8c909f]">{item.name}</td>
-                    <td className="p-2 text-[#adc6ff] font-semibold">{item.dinics}</td>
-                    <td className="p-2 text-[#d4e4fa]">{item.edmondsKarp}</td>
+                  <tr
+                    key={idx}
+                    className={`transition-colors hover:bg-[#0d1a28] ${idx % 2 === 1 ? 'bg-[#0a1929]/40' : ''}`}
+                  >
+                    <td className="px-2 py-1.5 text-[#8c909f] font-medium truncate" title={item.name}>{item.name}</td>
+                    <td className="px-2 py-1.5 text-[#adc6ff] font-bold whitespace-nowrap">{item.dinics}</td>
+                    <td className="px-2 py-1.5 text-[#d4e4fa] whitespace-nowrap">{item.edmondsKarp}</td>
+                    <td className="px-2 py-1.5 text-[#8c909f] whitespace-nowrap">{(item as any).pushRelabel ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -543,8 +576,18 @@ export const RightPanel: React.FC<RightPanelProps> = ({
           <label className="font-mono-data text-[10px] text-[#8c909f] font-bold uppercase tracking-wider flex items-center gap-1.5">
             <AlertCircle className="w-3.5 h-3.5 text-[#ffb786]" /> Process Diagnostics
           </label>
-          <div className="bg-[#273647]/70 p-3 rounded border-l-2 border-[#ffb786]">
-            <p className="text-[12px] text-[#d4e4fa] leading-relaxed font-inter">
+          <div className="bg-[#0d1a28] p-3 rounded-lg border-l-2 border-[#ffb786] border border-[#273647]">
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${
+                metrics.hasError ? 'bg-[#ffb4ab] animate-pulse' :
+                metrics.isTransferring ? 'bg-[#4edea3] animate-pulse' :
+                'bg-[#8c909f]'
+              }`} />
+              <span className="text-[9px] font-mono-data font-bold uppercase text-[#8c909f]">
+                {metrics.hasError ? 'FAULT DETECTED' : metrics.isTransferring ? 'ALL SYSTEMS NOMINAL' : 'STANDBY'}
+              </span>
+            </div>
+            <p className="text-[11px] text-[#d4e4fa] leading-relaxed font-inter">
               {healthReportText}
             </p>
           </div>

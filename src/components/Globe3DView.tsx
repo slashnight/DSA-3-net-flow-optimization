@@ -154,6 +154,30 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
     // Globe Radius
     const R = 155;
 
+    // === STAR FIELD ===
+    const starCount = 1800;
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const radius = 700 + Math.random() * 400;
+      starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      starPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      starPositions[i * 3 + 2] = radius * Math.cos(phi);
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starMat = new THREE.PointsMaterial({
+      color: 0xd4e4fa,
+      size: 1.4,
+      transparent: true,
+      opacity: 0.7,
+      sizeAttenuation: true,
+    });
+    const starField = new THREE.Points(starGeo, starMat);
+    scene.add(starField);
+    // ==================
+
     // Texture Loader with cache
     const textureLoader = new THREE.TextureLoader();
 
@@ -533,7 +557,6 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
 
     // 14. Smooth Animation Loop
     let rippleScale = 1;
-    let rippleOpacity = 0;
 
     const animate = () => {
       animationFrameId.current = requestAnimationFrame(animate);
@@ -640,8 +663,8 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
       )}
 
       {/* Helper Tip Badge */}
-      <div className="absolute top-4 right-4 z-20 pointer-events-none bg-[#122131]/80 backdrop-blur border border-[#424754]/70 rounded-md px-2.5 py-1 text-[10px] font-mono-data text-[#8c909f]">
-        Tip: <span className="text-[#adc6ff]">Double-tap / double-click</span> anywhere to align globe in that direction
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none bg-[#122131]/85 backdrop-blur-sm border border-[#424754]/60 rounded-full px-3 py-1.5 text-[10px] font-mono-data text-[#8c909f] whitespace-nowrap">
+        Tip: <span className="text-[#adc6ff] font-semibold">Double-click</span> globe to snap orient &nbsp;•&nbsp; <span className="text-[#4edea3] font-semibold">Drag</span> to rotate
       </div>
 
       {/* Country / Hub Floating Tooltip on 3D Globe */}

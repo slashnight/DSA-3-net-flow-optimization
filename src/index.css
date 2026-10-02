@@ -115,6 +115,45 @@
   will-change: transform, opacity;
 }
 
+/* Slide Down Animation (for error/success banners) */
+@keyframes slide-down-enter {
+  from {
+    transform: translateX(-50%) translateY(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideDown {
+  animation: slide-down-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Slow Pulse (for collapsed panel handles) */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2.8s ease-in-out infinite;
+}
+
+/* Shimmer loading effect */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(173,198,255,0.08) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
 .transition-smooth {
   transition: transform 180ms ease, opacity 180ms ease, box-shadow 180ms ease;
   will-change: transform, opacity;
