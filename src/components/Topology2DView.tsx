@@ -108,7 +108,7 @@ export const Topology2DView: React.FC<Topology2DViewProps> = ({
                 strokeWidth={strokeWidth}
                 strokeDasharray={path.isDropped ? '6,6' : isBest ? '6,6' : undefined}
                 className={isBest ? 'marching-ants' : path.status === 'SATURATED' ? 'pulse-error' : ''}
-                opacity={isDimmed ? 0.2 : path.isDropped ? 0.4 : 0.85}
+                opacity={isDimmed ? 0.5 : path.isDropped ? 0.4 : 0.85}
               />
 
               {/* Animated Packets along path if simulating */}
@@ -196,7 +196,7 @@ export const Topology2DView: React.FC<Topology2DViewProps> = ({
               transform={`translate(${node.x}, ${node.y})`}
               className="cursor-pointer transition-transform duration-200 hover:scale-110"
               onClick={() => onSelectNode(node)}
-              opacity={isDimmed ? 0.3 : 1}
+              opacity={isDimmed ? 0.5 : 1}
             >
               {/* Outer Glow on Selected */}
               {isSelected && (
