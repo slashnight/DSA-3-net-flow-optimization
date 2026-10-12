@@ -7,11 +7,12 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "node -e \"const fs=require('fs'); ['dist','server.js'].forEach(p=>{try{fs.rmSync(p,{recursive:true,force:true})}catch(e){}})\"",
     "lint": "tsc --noEmit",
     "backend:compile": "javac -d backend/bin backend/src/com/datacenter/flow/model/*.java backend/src/com/datacenter/flow/algorithm/*.java backend/src/com/datacenter/flow/server/*.java backend/src/com/datacenter/flow/test/*.java",
     "backend:test": "java -cp backend/bin com.datacenter.flow.test.NetworkFlowTestSuite",
-    "backend:server": "java -cp backend/bin com.datacenter.flow.server.NetworkFlowServer"
+    "backend:server": "java -cp backend/bin com.datacenter.flow.server.NetworkFlowServer",
+    "backend": "npm run backend:compile && npm run backend:server"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

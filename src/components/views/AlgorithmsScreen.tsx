@@ -30,6 +30,10 @@ export const AlgorithmsScreen: React.FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState<CodeLanguage>('typescript');
   const [copied, setCopied] = useState<boolean>(false);
   
+  // Backend connection state
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [engineSource, setEngineSource] = useState<'java' | 'typescript'>('typescript');
+
   // Live algorithm state
   const [liveThroughput, setLiveThroughput] = useState<number>(2900);
   const [executionLatency, setExecutionLatency] = useState<number>(0.08);
@@ -40,6 +44,31 @@ export const AlgorithmsScreen: React.FC = () => {
 
   // Topology node states for dynamic SVG visualization
   const [stepPhase, setStepPhase] = useState<'IDLE' | 'BFS_LEVELS' | 'DFS_BLOCKING' | 'MIN_CUT_ISOLATED'>('IDLE');
+
+  // Probe Java backend on mount
+  React.useEffect(() => {
+    let isMounted = true;
+    const probe = async () => {
+      try {
+        const res = await fetch('/api/health').catch(() => fetch('http://localhost:8080/api/health'));
+        if (res && res.ok) {
+          if (isMounted) {
+            setBackendStatus('online');
+            setEngineSource('java');
+          }
+          return;
+        }
+      } catch {
+        // offline
+      }
+      if (isMounted) {
+        setBackendStatus('offline');
+        setEngineSource('typescript');
+      }
+    };
+    probe();
+    return () => { isMounted = false; };
+  }, []);
 
   const nodes = [
     { id: 0, label: 'Source (S)', x: 60, y: 150, type: 'source', level: 0 },
@@ -72,33 +101,60 @@ export const AlgorithmsScreen: React.FC = () => {
     setActiveStep(1);
     setStepPhase('BFS_LEVELS');
 
+    let executedViaJava = false;
+
+    // 1. Attempt High-Performance Java Backend
     try {
-      const res = await fetch('http://localhost:8080/api/flow/compute', { method: 'POST' });
-      if (res.ok) {
+      const res = await Promise.race([
+        fetch('/api/flow/compute', { method: 'POST' }).catch(() => fetch('http://localhost:8080/api/flow/compute', { method: 'POST' })),
+        new Promise<Response>((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+      ]);
+      if (res && res.ok) {
         const data = await res.json();
         setLiveThroughput(data.maxFlow);
         setExecutionLatency(data.executionTimeMicros);
-      } else {
-        throw new Error('Backend offline');
+        setBackendStatus('online');
+        setEngineSource('java');
+        executedViaJava = true;
       }
-    } catch (err) {
-      console.error('Java Backend Error:', err);
-      alert('Strict Java Backend Mode: Please ensure the Java server is running on port 8080. Local TypeScript fallback is disabled.');
-      setIsExecuting(false);
-      return;
+    } catch {
+      // Backend not running, proceed to client fallback
+    }
+
+    // 2. Client-Side High-Speed Zero-GC TypeScript Engine Fallback
+    if (!executedViaJava) {
+      setBackendStatus('offline');
+      setEngineSource('typescript');
+      try {
+        const engine = new DataCenterFlowEngineTS(6, 12);
+        engine.addFiberLink(0, 1, 1500);
+        engine.addFiberLink(0, 2, 1400);
+        engine.addFiberLink(1, 2, 400);
+        engine.addFiberLink(1, 3, 1200);
+        engine.addFiberLink(1, 4, 300);
+        engine.addFiberLink(2, 4, 1400);
+        engine.addFiberLink(3, 5, 1500);
+        engine.addFiberLink(4, 5, 1700);
+
+        const result = engine.computeMaxFlow(0, 5);
+        setLiveThroughput(result.maxThroughputMbps);
+        setExecutionLatency(result.latencyMicroseconds);
+      } catch (e) {
+        console.error('Local engine fallback error:', e);
+      }
     }
 
     // Sequential step animation
     setTimeout(() => {
       setActiveStep(2);
       setStepPhase('DFS_BLOCKING');
-    }, 1200);
+    }, 1000);
 
     setTimeout(() => {
       setActiveStep(3);
       setStepPhase('MIN_CUT_ISOLATED');
       setIsExecuting(false);
-    }, 2600);
+    }, 2200);
   };
 
   // ==========================================
@@ -394,14 +450,29 @@ export const FlowVisualizerComponent: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-[#122131] border-[#424754] font-mono-data text-[11px]">
+            {backendStatus === 'online' ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-[#4edea3] animate-pulse" />
+                <span className="text-[#4edea3] font-bold">Java 25 Server (Port 8080)</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-[#adc6ff]" />
+                <span className="text-[#adc6ff] font-bold">Client TS Engine (Active)</span>
+                <span className="text-[#8c909f] text-[10px] hidden sm:inline">• Java Standby</span>
+              </>
+            )}
+          </div>
+
           <button
             onClick={handleRunAlgorithm}
             disabled={isExecuting}
             className="px-4 py-2.5 bg-[#adc6ff] text-[#002e6a] rounded-lg font-mono-data text-[12px] font-bold hover:bg-[#d8e2ff] transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(173,198,255,0.3)] disabled:opacity-50 cursor-pointer active:scale-95"
           >
             <Play className={`w-3.5 h-3.5 fill-current ${isExecuting ? 'animate-spin' : ''}`} />
-            {isExecuting ? 'Computing Layered Waves...' : 'Execute Live Dinic Benchmark'}
+            {isExecuting ? 'Computing Layered Waves...' : `Execute Live Dinic Benchmark (${engineSource === 'java' ? 'Java 25' : 'Client Engine'})`}
           </button>
         </div>
       </div>

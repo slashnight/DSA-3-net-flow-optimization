@@ -243,5 +243,18 @@ public class NetworkFlowServer {
         }
         NetworkFlowServer server = new NetworkFlowServer(port);
         server.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down Java Backend Server...");
+            server.stop();
+        }));
+
+        // Keep main thread alive while virtual thread HTTP server handles requests
+        try {
+            Thread.currentThread().join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            server.stop();
+        }
     }
 }
